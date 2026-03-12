@@ -98,8 +98,8 @@
     <div class="col-lg-4">
         <div class="stat-card p-4 mb-3" style="position:sticky;top:90px">
             <div style="font-size:.78rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Ticket Price</div>
-            <div style="font-size:2.2rem;font-weight:800;font-family:'Space Grotesk',sans-serif;color:#fff;letter-spacing:-.04em" class="mb-3">
-                {% if object.price == 0 %}Free{% else %}₹{{ object.price }}{% endif %}
+            <div id="priceDisplay" style="font-size:2.2rem;font-weight:800;font-family:'Space Grotesk',sans-serif;color:#fff;letter-spacing:-.04em" class="mb-3">
+                {% if object.starting_price == 0 %}Free{% else %}₹{{ object.starting_price }}{% endif %}
             </div>
 
             <ul class="list-unstyled mb-4" style="display:flex;flex-direction:column;gap:.5rem">
@@ -115,7 +115,36 @@
             </ul>
 
             {% if user.is_authenticated %}
-            <button class="btn btn-light w-100 fw-bold" style="border-radius:.875rem;padding:.7rem" onclick="createBooking({{ object.id }})">
+            {% if ticket_types %}
+            <div class="mb-3">
+                <label for="ticketType" class="form-label text-white-50 mb-1" style="font-size:.76rem">Ticket Type</label>
+                <select id="ticketType" class="form-select form-select-sm">
+                    {% for type in ticket_types %}
+                    {% if type.available_quantity > 0 %}
+                    <option value="{{ type.id }}" data-price="{{ type.price }}" data-available="{{ type.available_quantity }}">
+                        {{ type.name }} - ₹{{ type.price }} ({{ type.available_quantity }} left)
+                    </option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="ticketQty" class="form-label text-white-50 mb-1" style="font-size:.76rem">Quantity</label>
+                <input id="ticketQty" type="number" min="1" max="10" value="1" class="form-control form-control-sm">
+            </div>
+
+            <div class="mb-3">
+                <label for="couponCode" class="form-label text-white-50 mb-1" style="font-size:.76rem">Coupon Code (optional)</label>
+                <div class="d-flex gap-2">
+                    <input id="couponCode" type="text" class="form-control form-control-sm" placeholder="e.g. WELCOME10">
+                    <button id="applyCouponBtn" class="btn btn-outline-light btn-sm" type="button">Apply</button>
+                </div>
+                <div id="couponPreview" class="mt-2" style="display:none;font-size:.78rem;color:#bbf7d0"></div>
+            </div>
+
+            <button id="bookTicketBtn" class="btn btn-light w-100 fw-bold" style="border-radius:.875rem;padding:.7rem" onclick="createBooking({{ object.id }})">
                 <i class="bi bi-ticket-perforated me-2"></i>Book Ticket
             </button>
             {% else %}
@@ -143,26 +172,140 @@
 {% endblock %}
 {% block scripts %}
 <script>
+let couponApplied = false;
+let couponCode = '';
+
+function getSelectedTicketType() {
+    const select = document.getElementById('ticketType');
+    if (!select || !select.value) {
+        return null;
+    }
+    return {
+        id: Number(select.value),
+        price: Number(select.selectedOptions[0].dataset.price || 0),
+        available: Number(select.selectedOptions[0].dataset.available || 0),
+    };
+}
+
+function getQuantity() {
+    const qtyInput = document.getElementById('ticketQty');
+    return qtyInput ? Math.max(1, Number(qtyInput.value || 1)) : 1;
+}
+
+function updatePriceDisplay() {
+    const type = getSelectedTicketType();
+    const qty = getQuantity();
+    const unit = type ? type.price : Number('{{ object.price }}');
+    const total = unit * qty;
+    const display = document.getElementById('priceDisplay');
+    display.textContent = total === 0 ? 'Free' : `₹${total.toFixed(2)}`;
+}
+
 async function createBooking(eventId) {
-    const btn = event.target;
+    const btn = document.getElementById('bookTicketBtn');
     const orig = btn.innerHTML;
+    const ticketType = getSelectedTicketType();
+    const quantity = getQuantity();
+
+    if (ticketType && quantity > ticketType.available) {
+        showToast('Selected quantity is more than available seats for this ticket type.', 'error');
+        return;
+    }
+
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Booking…';
+
+    const payload = { event: eventId, quantity: quantity };
+    if (ticketType) {
+        payload.ticket_type = ticketType.id;
+    }
+    if (couponApplied && couponCode) {
+        payload.coupon_code = couponCode;
+    }
 
     const response = await fetch('/bookings/api/bookings/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-        body: JSON.stringify({ event: eventId, quantity: 1 })
+        body: JSON.stringify(payload)
     });
     const data = await response.json();
     btn.disabled = false;
     btn.innerHTML = orig;
 
     if (!response.ok) {
-        showToast(data.detail || 'Booking request failed', 'error');
+        const message = data.detail || data.non_field_errors?.[0] || data.coupon_code?.[0] || 'Booking request failed';
+        showToast(message, 'error');
         return;
     }
-    showToast('Booking created! Booking ID: ' + data.id, 'success');
+    showToast('Booking created! Reference: ' + data.booking_reference, 'success');
+    setTimeout(() => {
+        window.location.href = '/bookings/history/';
+    }, 800);
 }
+
+async function applyCoupon() {
+    const codeInput = document.getElementById('couponCode');
+    const preview = document.getElementById('couponPreview');
+    const code = codeInput.value.trim().toUpperCase();
+    if (!code) {
+        showToast('Enter a coupon code first.', 'warning');
+        return;
+    }
+
+    const payload = {
+        event: {{ object.id }},
+        quantity: getQuantity(),
+        coupon_code: code,
+    };
+    const ticketType = getSelectedTicketType();
+    if (ticketType) {
+        payload.ticket_type = ticketType.id;
+    }
+
+    const res = await fetch('/bookings/api/coupons/validate/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        preview.style.display = 'none';
+        couponApplied = false;
+        couponCode = '';
+        const message = data.coupon_code?.[0] || data.detail || 'Coupon is invalid.';
+        showToast(message, 'error');
+        return;
+    }
+
+    couponApplied = true;
+    couponCode = code;
+    preview.style.display = 'block';
+    preview.textContent = `Applied ${data.coupon_code}: -₹${Number(data.discount_amount).toFixed(2)} | Final ₹${Number(data.final_amount).toFixed(2)}`;
+    showToast('Coupon applied successfully.', 'success');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const ticketType = document.getElementById('ticketType');
+    const qty = document.getElementById('ticketQty');
+    const applyBtn = document.getElementById('applyCouponBtn');
+    if (ticketType) {
+        ticketType.addEventListener('change', () => {
+            couponApplied = false;
+            document.getElementById('couponPreview').style.display = 'none';
+            updatePriceDisplay();
+        });
+    }
+    if (qty) {
+        qty.addEventListener('input', () => {
+            couponApplied = false;
+            document.getElementById('couponPreview').style.display = 'none';
+            updatePriceDisplay();
+        });
+    }
+    if (applyBtn) {
+        applyBtn.addEventListener('click', applyCoupon);
+    }
+    updatePriceDisplay();
+});
 </script>
 {% endblock %}

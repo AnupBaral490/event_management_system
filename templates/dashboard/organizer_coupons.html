@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Manage Coupons — EventSphere{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <span class="section-label">Organizer Tools</span>
+            <h2 class="mb-0">Manage Coupons</h2>
+        </div>
+        <a href="/dashboard/" class="btn btn-outline-brand btn-sm"><i class="bi bi-arrow-left me-1"></i>Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="glass-card p-4">
+            <h5 class="mb-3">Create Coupon</h5>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="text-danger" style="font-size:.8rem">{{ field.errors|striptags }}</div>{% endif %}
+                </div>
+                {% endfor %}
+                <button class="btn btn-primary-brand" type="submit"><i class="bi bi-plus-circle me-1"></i>Create Coupon</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="glass-card p-4">
+            <h5 class="mb-3">My Coupons</h5>
+            {% if coupons %}
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Event</th>
+                            <th>Discount</th>
+                            <th>Validity</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for coupon in coupons %}
+                        <tr>
+                            <td><span class="badge-pill" style="background:#eef2ff;color:#4338ca">{{ coupon.code }}</span></td>
+                            <td>{{ coupon.event.title|default:'All My Events' }}</td>
+                            <td>
+                                {% if coupon.discount_type == 'PERCENTAGE' %}
+                                {{ coupon.discount_value }}%
+                                {% else %}
+                                ₹{{ coupon.discount_value }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="font-size:.8rem;color:var(--text-muted)">
+                                    {{ coupon.valid_from|date:'M d, Y H:i'|default:'-' }}<br>
+                                    to {{ coupon.valid_until|date:'M d, Y H:i'|default:'-' }}
+                                </div>
+                            </td>
+                            <td>
+                                {% if coupon.is_active %}
+                                <span class="status-badge status-confirmed">Active</span>
+                                {% else %}
+                                <span class="status-badge status-cancelled">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="post" action="/dashboard/organizer/coupons/{{ coupon.id }}/delete/" onsubmit="return confirm('Delete this coupon?')">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state py-3">
+                <p class="mb-0">No coupons created yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

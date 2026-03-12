@@ -1,13 +1,28 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Sum
+from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import TemplateView
 
-from bookings.models import Booking
-from events.models import Event
+from bookings.models import Booking, Coupon
+from events.models import Event, EventTicketType
+
+from .forms import OrganizerCouponForm, OrganizerTicketTypeForm
 
 
 class HomePageView(TemplateView):
 	template_name = 'home.html'
+
+
+class OrganizerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
+	def test_func(self):
+		user = self.request.user
+		return user.role == 'ORGANIZER' and user.is_organizer_approved
+
+	def handle_no_permission(self):
+		messages.error(self.request, 'Only approved organizers can access this page.')
+		return redirect('dashboard:home')
 
 
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
@@ -45,3 +60,61 @@ class CalendarPageView(TemplateView):
 
 class AnalyticsPageView(LoginRequiredMixin, TemplateView):
 	template_name = 'dashboard/analytics.html'
+
+
+class OrganizerTicketTypeManageView(OrganizerOnlyMixin, TemplateView):
+	template_name = 'dashboard/organizer_ticket_types.html'
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context['form'] = kwargs.get('form') or OrganizerTicketTypeForm(organizer=self.request.user)
+		context['ticket_types'] = EventTicketType.objects.select_related('event').filter(
+			event__organizer=self.request.user
+		).order_by('event__start_datetime', 'price')
+		return context
+
+	def post(self, request, *args, **kwargs):
+		form = OrganizerTicketTypeForm(request.POST, organizer=request.user)
+		if form.is_valid():
+			form.save()
+			messages.success(request, 'Ticket type created successfully.')
+			return redirect('dashboard:organizer-ticket-types')
+		messages.error(request, 'Please fix the form errors and try again.')
+		return self.render_to_response(self.get_context_data(form=form))
+
+
+class OrganizerTicketTypeDeleteView(OrganizerOnlyMixin, TemplateView):
+	def post(self, request, pk, *args, **kwargs):
+		ticket_type = get_object_or_404(EventTicketType, id=pk, event__organizer=request.user)
+		ticket_type.delete()
+		messages.success(request, 'Ticket type deleted.')
+		return redirect('dashboard:organizer-ticket-types')
+
+
+class OrganizerCouponManageView(OrganizerOnlyMixin, TemplateView):
+	template_name = 'dashboard/organizer_coupons.html'
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context['form'] = kwargs.get('form') or OrganizerCouponForm(organizer=self.request.user)
+		context['coupons'] = Coupon.objects.select_related('event').filter(created_by=self.request.user).order_by('-created_at')
+		return context
+
+	def post(self, request, *args, **kwargs):
+		form = OrganizerCouponForm(request.POST, organizer=request.user)
+		if form.is_valid():
+			coupon = form.save(commit=False)
+			coupon.created_by = request.user
+			coupon.save()
+			messages.success(request, 'Coupon created successfully.')
+			return redirect('dashboard:organizer-coupons')
+		messages.error(request, 'Please fix the form errors and try again.')
+		return self.render_to_response(self.get_context_data(form=form))
+
+
+class OrganizerCouponDeleteView(OrganizerOnlyMixin, TemplateView):
+	def post(self, request, pk, *args, **kwargs):
+		coupon = get_object_or_404(Coupon, id=pk, created_by=request.user)
+		coupon.delete()
+		messages.success(request, 'Coupon deleted.')
+		return redirect('dashboard:organizer-coupons')

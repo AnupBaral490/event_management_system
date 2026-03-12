@@ -22,6 +22,7 @@
             <tr>
                 <th style="padding-left:1.5rem">Reference</th>
                 <th>Event</th>
+                <th>Ticket Type</th>
                 <th>Date</th>
                 <th>Status</th>
                 <th>Amount</th>
@@ -40,6 +41,18 @@
                     <i class="bi bi-calendar3 me-1"></i>{{ booking.event.start_datetime|date:'M d, Y' }}
                 </div>
             </td>
+            <td style="font-size:.84rem;color:var(--text)">
+                {% if booking.ticket_type %}
+                <span class="badge-pill" style="background:#eef2ff;color:#4338ca">{{ booking.ticket_type.name }}</span>
+                {% else %}
+                <span style="color:var(--text-muted)">Standard</span>
+                {% endif %}
+                {% if booking.coupon %}
+                <div style="margin-top:.3rem;font-size:.75rem;color:#059669">
+                    {{ booking.coupon.code }} applied (-₹{{ booking.discount_amount }})
+                </div>
+                {% endif %}
+            </td>
             <td style="font-size:.85rem;color:var(--text-muted)">
                 {{ booking.created_at|date:'M d, Y'|default:"-" }}
             </td>
@@ -56,6 +69,9 @@
             </td>
             <td style="font-weight:600;font-size:.9rem">
                 ₹{{ booking.total_amount }}
+                {% if booking.discount_amount > 0 %}
+                <div style="font-size:.75rem;color:var(--text-muted)">Base ₹{{ booking.base_amount }}</div>
+                {% endif %}
             </td>
             <td style="padding-right:1.5rem">
                 {% if booking.ticket %}

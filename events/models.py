@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
@@ -54,6 +55,52 @@ class Event(models.Model):
 
 	def __str__(self):
 		return self.title
+
+	@property
+	def has_ticket_types(self):
+		return self.ticket_types.exists()
+
+	@property
+	def starting_price(self):
+		if self.has_ticket_types:
+			result = self.ticket_types.filter(is_active=True).aggregate(min_price=models.Min('price')).get('min_price')
+			if result is not None:
+				return result
+		return Decimal(self.price)
+
+
+class EventTicketType(models.Model):
+	class SaleStatus(models.TextChoices):
+		ACTIVE = 'ACTIVE', 'Active'
+		INACTIVE = 'INACTIVE', 'Inactive'
+
+	event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='ticket_types')
+	name = models.CharField(max_length=120)
+	description = models.CharField(max_length=255, blank=True)
+	price = models.DecimalField(max_digits=10, decimal_places=2)
+	quantity = models.PositiveIntegerField()
+	sale_start = models.DateTimeField(null=True, blank=True)
+	sale_end = models.DateTimeField(null=True, blank=True)
+	status = models.CharField(max_length=20, choices=SaleStatus.choices, default=SaleStatus.ACTIVE)
+	is_active = models.BooleanField(default=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ['price', 'id']
+		unique_together = ('event', 'name')
+
+	@property
+	def sold_quantity(self):
+		confirmed = self.bookings.filter(status='CONFIRMED').aggregate(total=models.Sum('quantity')).get('total') or 0
+		return confirmed
+
+	@property
+	def available_quantity(self):
+		return max(self.quantity - self.sold_quantity, 0)
+
+	def __str__(self):
+		return f'{self.event.title} - {self.name}'
 
 
 class EventReview(models.Model):

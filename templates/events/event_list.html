@@ -47,10 +47,10 @@
                     {{ event.available_seats }} seats left
                 </div>
                 <div class="event-footer">
-                    {% if event.price == 0 %}
+                    {% if event.starting_price == 0 %}
                     <span class="price-badge free">Free</span>
                     {% else %}
-                    <span class="price-badge">₹{{ event.price }}</span>
+                    <span class="price-badge">From ₹{{ event.starting_price }}</span>
                     {% endif %}
                     <span class="btn btn-sm btn-primary-brand">View Details</span>
                 </div>

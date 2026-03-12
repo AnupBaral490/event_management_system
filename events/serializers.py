@@ -1,7 +1,7 @@
 from django.db.models import Avg
 from rest_framework import serializers
 
-from .models import Event, EventCategory, EventReview
+from .models import Event, EventCategory, EventReview, EventTicketType
 
 
 class EventCategorySerializer(serializers.ModelSerializer):
@@ -19,11 +19,31 @@ class EventReviewSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'created_at']
 
 
+class EventTicketTypeSerializer(serializers.ModelSerializer):
+    available_quantity = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = EventTicketType
+        fields = [
+            'id',
+            'name',
+            'description',
+            'price',
+            'quantity',
+            'available_quantity',
+            'sale_start',
+            'sale_end',
+            'status',
+            'is_active',
+        ]
+
+
 class EventSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     organizer_name = serializers.CharField(source='organizer.username', read_only=True)
     available_seats = serializers.IntegerField(read_only=True)
     average_rating = serializers.SerializerMethodField()
+    ticket_types = EventTicketTypeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Event
@@ -51,6 +71,7 @@ class EventSerializer(serializers.ModelSerializer):
             'stream_channel',
             'stream_join_url',
             'average_rating',
+            'ticket_types',
             'created_at',
             'updated_at',
         ]

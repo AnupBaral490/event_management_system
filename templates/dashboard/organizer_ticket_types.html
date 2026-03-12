@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Manage Ticket Types — EventSphere{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <span class="section-label">Organizer Tools</span>
+            <h2 class="mb-0">Manage Ticket Types</h2>
+        </div>
+        <a href="/dashboard/" class="btn btn-outline-brand btn-sm"><i class="bi bi-arrow-left me-1"></i>Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="glass-card p-4">
+            <h5 class="mb-3">Create Ticket Type</h5>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="text-danger" style="font-size:.8rem">{{ field.errors|striptags }}</div>{% endif %}
+                </div>
+                {% endfor %}
+                <button class="btn btn-primary-brand" type="submit"><i class="bi bi-plus-circle me-1"></i>Create Ticket Type</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="glass-card p-4">
+            <h5 class="mb-3">Existing Ticket Types</h5>
+            {% if ticket_types %}
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Available</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for type in ticket_types %}
+                        <tr>
+                            <td>{{ type.event.title }}</td>
+                            <td>{{ type.name }}</td>
+                            <td>₹{{ type.price }}</td>
+                            <td>{{ type.available_quantity }}/{{ type.quantity }}</td>
+                            <td>
+                                {% if type.is_active and type.status == 'ACTIVE' %}
+                                <span class="status-badge status-confirmed">Active</span>
+                                {% else %}
+                                <span class="status-badge status-cancelled">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="post" action="/dashboard/organizer/ticket-types/{{ type.id }}/delete/" onsubmit="return confirm('Delete this ticket type?')">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state py-3">
+                <p class="mb-0">No ticket types created yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

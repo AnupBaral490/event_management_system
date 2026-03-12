@@ -14,7 +14,7 @@ from .serializers import EventCategorySerializer, EventReviewSerializer, EventSe
 
 
 class EventViewSet(viewsets.ModelViewSet):
-	queryset = Event.objects.select_related('category', 'organizer').all()
+	queryset = Event.objects.select_related('category', 'organizer').prefetch_related('ticket_types').all()
 	serializer_class = EventSerializer
 	filterset_fields = ['category', 'is_published', 'is_live_stream_enabled']
 	search_fields = ['title', 'description', 'location_name']
@@ -114,7 +114,7 @@ class EventListPageView(ListView):
 
 	def get_queryset(self):
 		query = self.request.GET.get('q', '')
-		qs = Event.objects.filter(is_published=True, is_blocked=False).select_related('category', 'organizer')
+		qs = Event.objects.filter(is_published=True, is_blocked=False).select_related('category', 'organizer').prefetch_related('ticket_types')
 		if query:
 			qs = qs.filter(title__icontains=query)
 		return qs.order_by('start_datetime')
@@ -128,6 +128,7 @@ class EventDetailPageView(DetailView):
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
+		context['ticket_types'] = self.object.ticket_types.filter(is_active=True, status='ACTIVE').order_by('price')
 		context['reviews'] = self.object.reviews.select_related('user')[:10]
 		context['avg_rating'] = self.object.reviews.aggregate(avg=Avg('rating')).get('avg')
 		return context

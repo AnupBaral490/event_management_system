@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Event, EventCategory, EventReview
+from .models import Event, EventCategory, EventReview, EventTicketType
 
 
 @admin.register(EventCategory)
@@ -21,3 +21,10 @@ class EventAdmin(admin.ModelAdmin):
 class EventReviewAdmin(admin.ModelAdmin):
 	list_display = ('event', 'user', 'rating', 'created_at')
 	list_filter = ('rating',)
+
+
+@admin.register(EventTicketType)
+class EventTicketTypeAdmin(admin.ModelAdmin):
+	list_display = ('event', 'name', 'price', 'quantity', 'status', 'is_active')
+	list_filter = ('status', 'is_active')
+	search_fields = ('event__title', 'name')

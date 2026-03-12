@@ -1,13 +1,42 @@
 from django.contrib import admin
 
-from .models import Attendance, Booking, Ticket
+from .models import Attendance, Booking, Coupon, Ticket
 
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-	list_display = ('booking_reference', 'user', 'event', 'quantity', 'total_amount', 'status', 'created_at')
+	list_display = (
+		'booking_reference',
+		'user',
+		'event',
+		'ticket_type',
+		'quantity',
+		'base_amount',
+		'discount_amount',
+		'total_amount',
+		'status',
+		'created_at',
+	)
 	list_filter = ('status',)
 	search_fields = ('booking_reference', 'user__username', 'event__title')
+
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+	list_display = (
+		'code',
+		'created_by',
+		'event',
+		'discount_type',
+		'discount_value',
+		'min_order_amount',
+		'max_total_uses',
+		'is_active',
+		'valid_from',
+		'valid_until',
+	)
+	list_filter = ('discount_type', 'is_active')
+	search_fields = ('code', 'description')
 
 
 @admin.register(Ticket)

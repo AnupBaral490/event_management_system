@@ -1,15 +1,18 @@
 from rest_framework import generics, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import status
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, ListView
 
 from accounts.permissions import IsApprovedOrganizer
+from events.models import Event
 
 from .models import Booking, Ticket
 from .serializers import (
 	BookingCreateSerializer,
 	BookingSerializer,
+	CouponValidateSerializer,
 	TicketSerializer,
 	TicketValidationSerializer,
 )
@@ -18,7 +21,7 @@ from notifications.services import create_notification
 
 
 class BookingViewSet(viewsets.ModelViewSet):
-	queryset = Booking.objects.select_related('event', 'user').all()
+	queryset = Booking.objects.select_related('event', 'user', 'ticket_type', 'coupon').all()
 
 	def get_serializer_class(self):
 		if self.action == 'create':
@@ -35,6 +38,13 @@ class BookingViewSet(viewsets.ModelViewSet):
 		if user.role == 'ORGANIZER':
 			return self.queryset.filter(event__organizer=user)
 		return self.queryset.filter(user=user)
+
+	def create(self, request, *args, **kwargs):
+		serializer = self.get_serializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+		booking = serializer.save()
+		output = BookingSerializer(booking, context={'request': request})
+		return Response(output.data, status=status.HTTP_201_CREATED)
 
 	@action(detail=True, methods=['post'])
 	def confirm(self, request, pk=None):
@@ -60,7 +70,36 @@ class BookingHistoryAPIView(generics.ListAPIView):
 	permission_classes = [permissions.IsAuthenticated]
 
 	def get_queryset(self):
-		return Booking.objects.filter(user=self.request.user).select_related('event')
+		return Booking.objects.filter(user=self.request.user).select_related('event', 'ticket_type', 'coupon')
+
+
+class CouponValidateAPIView(generics.GenericAPIView):
+	serializer_class = CouponValidateSerializer
+	permission_classes = [permissions.IsAuthenticated]
+
+	def post(self, request, *args, **kwargs):
+		serializer = self.get_serializer(
+			data=request.data,
+			context={
+				'request': request,
+				'event_queryset': Event.objects.filter(
+					is_published=True,
+					is_blocked=False,
+				),
+			},
+		)
+		serializer.is_valid(raise_exception=True)
+		validated = serializer.validated_data
+		coupon = validated['coupon_obj']
+		return Response(
+			{
+				'coupon_code': coupon.code,
+				'discount_type': coupon.discount_type,
+				'base_amount': validated['base_amount'],
+				'discount_amount': validated['discount_amount'],
+				'final_amount': validated['total_amount'],
+			}
+		)
 
 
 class TicketListAPIView(generics.ListAPIView):
@@ -90,7 +129,7 @@ class BookingHistoryPageView(LoginRequiredMixin, ListView):
 	context_object_name = 'bookings'
 
 	def get_queryset(self):
-		return Booking.objects.filter(user=self.request.user).select_related('event')
+		return Booking.objects.filter(user=self.request.user).select_related('event', 'ticket_type', 'coupon')
 
 
 class TicketDetailPageView(LoginRequiredMixin, DetailView):

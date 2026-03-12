@@ -141,6 +141,20 @@
                 Analytics
             </a>
         </div>
+        {% if user.role == 'ORGANIZER' and user.is_organizer_approved %}
+        <div class="col-6 col-md-3">
+            <a href="/dashboard/organizer/ticket-types/" class="quick-action">
+                <span class="qa-icon"><i class="bi bi-layers"></i></span>
+                Ticket Types
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="/dashboard/organizer/coupons/" class="quick-action">
+                <span class="qa-icon"><i class="bi bi-ticket-detailed"></i></span>
+                Coupons
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
 
