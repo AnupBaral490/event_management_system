@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="glass-card p-4 mb-3">
+    <h2 class="mb-1">Analytics</h2>
+    <p class="mb-0 text-secondary">Revenue, bookings, and attendee patterns in one place.</p>
+</div>
+<div class="row g-3 mb-3" id="summaryCards"></div>
+<div class="glass-card p-3">
+    <canvas id="bookingTrendChart" height="120"></canvas>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadAnalytics() {
+    const response = await fetch('/analytics/api/dashboard/');
+    const data = await response.json();
+    const totals = data.totals || {};
+    document.getElementById('summaryCards').innerHTML = `
+        <div class="col-md-3"><div class="stat-card p-3"><p>Revenue</p><h4>INR ${totals.total_revenue || 0}</h4></div></div>
+        <div class="col-md-3"><div class="stat-card p-3"><p>Tickets</p><h4>${totals.total_tickets || 0}</h4></div></div>
+        <div class="col-md-3"><div class="stat-card p-3"><p>Bookings</p><h4>${totals.total_bookings || 0}</h4></div></div>
+        <div class="col-md-3"><div class="stat-card p-3"><p>Attendees</p><h4>${totals.unique_attendees || 0}</h4></div></div>
+    `;
+
+    const labels = data.trend.map(item => item.date);
+    const bookings = data.trend.map(item => item.bookings);
+    const revenue = data.trend.map(item => item.revenue);
+
+    new Chart(document.getElementById('bookingTrendChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Bookings',
+                    data: bookings,
+                    borderColor: '#0f172a',
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Revenue',
+                    data: revenue,
+                    borderColor: '#ea580c',
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                y: { position: 'left' },
+                y1: { position: 'right', grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+}
+loadAnalytics();
+</script>
+{% endblock %}

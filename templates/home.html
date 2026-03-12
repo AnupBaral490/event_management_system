@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}EventSphere | Discover and Book{% endblock %}
+{% block content %}
+<section class="hero-panel p-5 rounded-4 mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <span class="hero-pill mb-3">Trusted by organizers, loved by attendees</span>
+            <h1 class="display-5 fw-bold mb-3">Plan, Promote, and Experience Events Better</h1>
+            <p class="lead mb-4">A complete platform for attendees, organizers, and admins. Browse events, pay securely, and validate QR tickets in seconds.</p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/events/" class="btn btn-light btn-lg">Browse Events</a>
+                <a href="/accounts/register-page/" class="btn btn-outline-light btn-lg">Get Started</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="stat-card p-4">
+                <h5>Platform Highlights</h5>
+                <ul class="mb-0">
+                    <li>Razorpay payments</li>
+                    <li>QR-based ticket validation</li>
+                    <li>Organizer and admin analytics</li>
+                    <li>Calendar-first event discovery</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+<section>
+    <h3 class="section-title">Three Dashboards, One Platform</h3>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <h5>For Attendees</h5>
+                <p class="mb-0">Book tickets, access QR passes, track payment and booking history, and receive reminders before events.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <h5>For Organizers</h5>
+                <p class="mb-0">Publish events, manage capacity, view attendee lists, and monitor revenue with visual analytics.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card h-100">
+                <h5>For Admins</h5>
+                <p class="mb-0">Approve organizers, moderate listings, monitor bookings and payments, and keep quality high.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

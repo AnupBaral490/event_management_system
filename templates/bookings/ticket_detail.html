@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Ticket {{ object.ticket_id }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="glass-card p-4 text-center">
+      <h3>{{ object.booking.event.title }}</h3>
+      <p>Ticket ID: <strong>{{ object.ticket_id }}</strong></p>
+      <p>Booking Ref: {{ object.booking.booking_reference }}</p>
+      <p>Status: {% if object.is_used %}Used{% else %}Valid{% endif %}</p>
+      {% if object.qr_code %}<img src="{{ object.qr_code.url }}" alt="QR" style="max-width:260px" class="img-fluid">{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

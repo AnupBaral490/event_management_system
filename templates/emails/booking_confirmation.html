@@ -1,0 +1,10 @@
+<h2>Booking Confirmed</h2>
+<p>Hello {{ booking.user.first_name|default:booking.user.username }},</p>
+<p>Your booking for <strong>{{ booking.event.title }}</strong> is confirmed.</p>
+<ul>
+    <li>Booking Reference: {{ booking.booking_reference }}</li>
+    <li>Event Date: {{ booking.event.start_datetime }}</li>
+    <li>Venue: {{ booking.event.location_name }}</li>
+    <li>Quantity: {{ booking.quantity }}</li>
+</ul>
+<p>You can view your ticket and QR code from your dashboard.</p>

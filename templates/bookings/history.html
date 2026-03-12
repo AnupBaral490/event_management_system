@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}My Bookings{% endblock %}
+{% block content %}
+<h2 class="mb-3">My Bookings</h2>
+<div class="glass-card p-3">
+<table class="table">
+  <thead>
+    <tr><th>Reference</th><th>Event</th><th>Status</th><th>Amount</th><th>Ticket</th></tr>
+  </thead>
+  <tbody>
+    {% for booking in bookings %}
+      <tr>
+        <td>{{ booking.booking_reference }}</td>
+        <td>{{ booking.event.title }}</td>
+        <td>{{ booking.status }}</td>
+        <td>INR {{ booking.total_amount }}</td>
+        <td>
+          {% if booking.ticket %}
+            <a href="{% url 'bookings:ticket-detail' booking.ticket.ticket_id %}" class="btn btn-sm btn-outline-dark">View Ticket</a>
+          {% else %}
+            -
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5">No bookings yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

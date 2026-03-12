@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Events{% endblock %}
+{% block content %}
+<div class="glass-card p-3 p-md-4 mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h2 class="mb-1">Upcoming Events</h2>
+            <p class="mb-0 text-secondary">Search by title and find the right event faster.</p>
+        </div>
+        <form method="get" class="d-flex" role="search">
+            <input type="search" class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Search events">
+        </form>
+    </div>
+</div>
+<div class="row g-3">
+    {% for event in events %}
+    <div class="col-md-6 col-lg-4">
+        <div class="event-card h-100">
+            {% if event.poster %}
+            <img src="{{ event.poster.url }}" class="w-100 event-poster" alt="{{ event.title }}">
+            {% endif %}
+            <div class="p-3">
+                <h5>{{ event.title }}</h5>
+                <p class="mb-1 text-secondary">{{ event.location_name }}</p>
+                <p class="mb-3">{{ event.start_datetime|date:'M d, Y H:i' }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="price-badge">INR {{ event.price }}</span>
+                    <a href="{% url 'events:detail' event.slug %}" class="btn btn-sm btn-outline-brand">View Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="feature-card">No events available yet. Check back soon.</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

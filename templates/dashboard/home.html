@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="glass-card p-4 mb-4">
+    <h2 class="mb-1">{{ user.role }} Dashboard</h2>
+    <p class="mb-0 text-secondary">Track your key metrics and take quick actions.</p>
+</div>
+<div class="row g-3">
+    {% if user.role == 'ADMIN' %}
+        <div class="col-md-3"><div class="feature-card"><p>Users</p><h3>{{ total_users }}</h3></div></div>
+        <div class="col-md-3"><div class="feature-card"><p>Events</p><h3>{{ total_events }}</h3></div></div>
+        <div class="col-md-3"><div class="feature-card"><p>Bookings</p><h3>{{ total_bookings }}</h3></div></div>
+        <div class="col-md-3"><div class="feature-card"><p>Revenue</p><h3>INR {{ total_revenue }}</h3></div></div>
+    {% elif user.role == 'ORGANIZER' %}
+        <div class="col-md-4"><div class="feature-card"><p>My Events</p><h3>{{ total_events }}</h3></div></div>
+        <div class="col-md-4"><div class="feature-card"><p>Ticket Sales</p><h3>{{ total_bookings }}</h3></div></div>
+        <div class="col-md-4"><div class="feature-card"><p>Revenue</p><h3>INR {{ total_revenue }}</h3></div></div>
+    {% else %}
+        <div class="col-md-6"><div class="feature-card"><p>My Bookings</p><h3>{{ my_bookings }}</h3></div></div>
+        <div class="col-md-6"><div class="feature-card"><p>Upcoming Events</p><h3>{{ upcoming_events }}</h3></div></div>
+    {% endif %}
+</div>
+<div class="mt-4 d-flex gap-2">
+    <a href="/dashboard/calendar/" class="btn btn-primary-brand">Calendar View</a>
+    <a href="/dashboard/analytics/" class="btn btn-outline-brand">Analytics</a>
+</div>
+{% endblock %}
