@@ -1,20 +1,43 @@
 {% extends 'base.html' %}
-{% block title %}Event Calendar{% endblock %}
+{% block title %}Event Calendar — EventSphere{% endblock %}
 {% block content %}
-<div class="glass-card p-4 mb-3">
-    <h2 class="mb-1">Event Calendar</h2>
-    <p class="mb-0 text-secondary">View all upcoming events by date and click any item to open details.</p>
+
+<div class="page-header">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <span class="section-label">Schedule</span>
+            <h2 class="mb-0">Event Calendar</h2>
+        </div>
+        <a href="/events/" class="btn btn-primary-brand btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Browse Events
+        </a>
+    </div>
 </div>
-<div id="calendar" class="glass-card p-3"></div>
+
+<div class="chart-card" style="padding:1.25rem">
+    <div id="calendar"></div>
+</div>
+
 {% endblock %}
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+document.addEventListener('DOMContentLoaded', function () {
+    const el = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(el, {
         initialView: 'dayGridMonth',
         height: 'auto',
-        events: '/events/api/events/calendar/'
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        events: '/events/api/events/calendar/',
+        eventClick: function (info) {
+            window.location.href = '/events/' + info.event.extendedProps.slug + '/';
+        },
+        eventDidMount: function (info) {
+            info.el.title = info.event.title;
+        }
     });
     calendar.render();
 });

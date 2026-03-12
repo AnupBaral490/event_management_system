@@ -1,38 +1,70 @@
 {% extends 'base.html' %}
-{% block title %}Events{% endblock %}
+{% block title %}Events — EventSphere{% endblock %}
 {% block content %}
-<div class="glass-card p-3 p-md-4 mb-4">
+
+<!-- Page header -->
+<div class="page-header mb-4">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <div>
-            <h2 class="mb-1">Upcoming Events</h2>
-            <p class="mb-0 text-secondary">Search by title and find the right event faster.</p>
+            <span class="section-label">Discover</span>
+            <h2 class="mb-0">Upcoming Events</h2>
         </div>
-        <form method="get" class="d-flex" role="search">
-            <input type="search" class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Search events">
+        <form method="get" class="search-wrap" role="search" style="min-width:260px">
+            <i class="bi bi-search search-icon"></i>
+            <input type="search" class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Search events…" autocomplete="off">
         </form>
     </div>
 </div>
-<div class="row g-3">
+
+<!-- Event grid -->
+<div class="row g-4">
     {% for event in events %}
-    <div class="col-md-6 col-lg-4">
+    <div class="col-sm-6 col-lg-4">
+        <a href="{% url 'events:detail' event.slug %}" class="text-decoration-none">
         <div class="event-card h-100">
-            {% if event.poster %}
-            <img src="{{ event.poster.url }}" class="w-100 event-poster" alt="{{ event.title }}">
-            {% endif %}
-            <div class="p-3">
-                <h5>{{ event.title }}</h5>
-                <p class="mb-1 text-secondary">{{ event.location_name }}</p>
-                <p class="mb-3">{{ event.start_datetime|date:'M d, Y H:i' }}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="price-badge">INR {{ event.price }}</span>
-                    <a href="{% url 'events:detail' event.slug %}" class="btn btn-sm btn-outline-brand">View Details</a>
+            <div class="event-poster-wrap">
+                {% if event.poster %}
+                <img src="{{ event.poster.url }}" class="event-poster" alt="{{ event.title }}">
+                {% else %}
+                <div class="event-poster-placeholder">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+                {% endif %}
+                <span class="cat-badge">{{ event.start_datetime|date:'M d' }}</span>
+            </div>
+            <div class="event-body">
+                <div class="event-meta">
+                    <i class="bi bi-geo-alt-fill" style="color:var(--primary)"></i>
+                    {{ event.location_name|default:"Online" }}
+                </div>
+                <h5 class="event-title">{{ event.title }}</h5>
+                <div class="d-flex align-items-center gap-2 mb-2" style="font-size:.83rem;color:var(--text-muted)">
+                    <i class="bi bi-clock"></i>
+                    {{ event.start_datetime|date:'D, M d · g:i A' }}
+                </div>
+                <div class="d-flex align-items-center gap-2" style="font-size:.83rem;color:var(--text-muted)">
+                    <i class="bi bi-people"></i>
+                    {{ event.available_seats }} seats left
+                </div>
+                <div class="event-footer">
+                    {% if event.price == 0 %}
+                    <span class="price-badge free">Free</span>
+                    {% else %}
+                    <span class="price-badge">₹{{ event.price }}</span>
+                    {% endif %}
+                    <span class="btn btn-sm btn-primary-brand">View Details</span>
                 </div>
             </div>
         </div>
+        </a>
     </div>
     {% empty %}
     <div class="col-12">
-        <div class="feature-card">No events available yet. Check back soon.</div>
+        <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-calendar-x"></i></div>
+            <h5>No events found</h5>
+            <p class="mb-0">Try a different search or check back soon for upcoming events.</p>
+        </div>
     </div>
     {% endfor %}
 </div>

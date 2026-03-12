@@ -1,14 +1,41 @@
 {% extends 'base.html' %}
-{% block title %}Register{% endblock %}
+{% block title %}Create Account — EventSphere{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="glass-card p-4">
-      <h3 class="mb-3">Create Account</h3>
-      <form method="post">{% csrf_token %}
-        {{ form.as_p }}
-        <button class="btn btn-dark w-100" type="submit">Register</button>
-      </form>
+<div class="auth-wrap">
+  <div class="auth-card" style="max-width:520px">
+    <div class="text-center mb-4">
+      <div class="auth-logo mb-2"><i class="bi bi-stars me-1"></i>EventSphere</div>
+      <h4 style="font-size:1.35rem;margin-bottom:.35rem">Create your account</h4>
+      <p style="color:var(--text-muted);font-size:.88rem;margin:0">Join thousands of event lovers and organizers</p>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+        <div class="text-danger" style="font-size:.8rem;margin-top:.25rem">
+          {% for error in field.errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
+        {% if field.help_text %}
+        <div class="form-text" style="font-size:.78rem">{{ field.help_text }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button class="btn btn-primary-brand w-100 mt-2" type="submit" style="padding:.7rem;font-size:.95rem">
+        <i class="bi bi-person-check me-2"></i>Create Account
+      </button>
+    </form>
+
+    <div class="auth-divider"><span>already have an account?</span></div>
+
+    <div class="text-center mt-3">
+      <a href="/accounts/login/" class="btn btn-outline-brand w-100">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In Instead
+      </a>
     </div>
   </div>
 </div>

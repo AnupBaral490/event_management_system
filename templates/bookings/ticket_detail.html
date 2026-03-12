@@ -1,14 +1,83 @@
 {% extends 'base.html' %}
-{% block title %}Ticket {{ object.ticket_id }}{% endblock %}
+{% block title %}Ticket — {{ object.booking.event.title }}{% endblock %}
 {% block content %}
+
 <div class="row justify-content-center">
-  <div class="col-md-7">
-    <div class="glass-card p-4 text-center">
-      <h3>{{ object.booking.event.title }}</h3>
-      <p>Ticket ID: <strong>{{ object.ticket_id }}</strong></p>
-      <p>Booking Ref: {{ object.booking.booking_reference }}</p>
-      <p>Status: {% if object.is_used %}Used{% else %}Valid{% endif %}</p>
-      {% if object.qr_code %}<img src="{{ object.qr_code.url }}" alt="QR" style="max-width:260px" class="img-fluid">{% endif %}
+  <div class="col-md-8 col-lg-6">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb" style="font-size:.83rem">
+        <li class="breadcrumb-item"><a href="/bookings/history/">My Bookings</a></li>
+        <li class="breadcrumb-item active">Ticket</li>
+      </ol>
+    </nav>
+
+    <div class="ticket-card">
+
+      <!-- Ticket header -->
+      <div class="ticket-header">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:.5rem">Event Ticket</div>
+        <h3 style="color:#fff;margin:0 0 .5rem;font-size:1.35rem">{{ object.booking.event.title }}</h3>
+        <div style="font-size:.9rem;color:rgba(255,255,255,.65)">
+          <i class="bi bi-calendar3 me-1"></i>{{ object.booking.event.start_datetime|date:'D, M d, Y · g:i A' }}
+        </div>
+      </div>
+
+      <!-- Perforations -->
+      <div class="ticket-perforations"><div class="line"></div></div>
+
+      <!-- Ticket body -->
+      <div class="ticket-body">
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="ticket-field">
+              <label>Ticket ID</label>
+              <span>{{ object.ticket_id }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="ticket-field">
+              <label>Booking Ref</label>
+              <span>{{ object.booking.booking_reference }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="ticket-field">
+              <label>Location</label>
+              <span>{{ object.booking.event.location_name|default:"Online" }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="ticket-field">
+              <label>Status</label>
+              <span>
+                {% if object.is_used %}
+                <span class="status-badge status-used">Used</span>
+                {% else %}
+                <span class="status-badge status-valid">Valid</span>
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {% if object.qr_code %}
+        <div class="text-center">
+          <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem">Present this QR code at the event entrance</p>
+          <div class="qr-wrap">
+            <img src="{{ object.qr_code.url }}" alt="QR Code" style="max-width:220px;width:100%;display:block">
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-4 text-center">
+          <a href="/bookings/history/" class="btn btn-outline-brand btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back to Bookings
+          </a>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

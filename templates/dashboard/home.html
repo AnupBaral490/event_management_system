@@ -1,27 +1,147 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard — EventSphere{% endblock %}
 {% block content %}
-<div class="glass-card p-4 mb-4">
-    <h2 class="mb-1">{{ user.role }} Dashboard</h2>
-    <p class="mb-0 text-secondary">Track your key metrics and take quick actions.</p>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <span class="section-label">
+                {% if user.role == 'ADMIN' %}Admin{% elif user.role == 'ORGANIZER' %}Organizer{% else %}Attendee{% endif %} Portal
+            </span>
+            <h2 class="mb-0">Welcome back, {{ user.username }}</h2>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/dashboard/calendar/" class="btn btn-primary-brand btn-sm">
+                <i class="bi bi-calendar3 me-1"></i>Calendar
+            </a>
+            <a href="/dashboard/analytics/" class="btn btn-outline-brand btn-sm">
+                <i class="bi bi-bar-chart-line me-1"></i>Analytics
+            </a>
+        </div>
+    </div>
 </div>
-<div class="row g-3">
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
     {% if user.role == 'ADMIN' %}
-        <div class="col-md-3"><div class="feature-card"><p>Users</p><h3>{{ total_users }}</h3></div></div>
-        <div class="col-md-3"><div class="feature-card"><p>Events</p><h3>{{ total_events }}</h3></div></div>
-        <div class="col-md-3"><div class="feature-card"><p>Bookings</p><h3>{{ total_bookings }}</h3></div></div>
-        <div class="col-md-3"><div class="feature-card"><p>Revenue</p><h3>INR {{ total_revenue }}</h3></div></div>
+    <div class="col-6 col-lg-3">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#6366f1,#4f46e5)"></div>
+            <div class="kpi-icon" style="background:#eef2ff;color:#4f46e5"><i class="bi bi-people-fill"></i></div>
+            <div class="kpi-value" data-target="{{ total_users }}">{{ total_users }}</div>
+            <div class="kpi-label">Total Users</div>
+            <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>Active</span>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#06b6d4,#0891b2)"></div>
+            <div class="kpi-icon" style="background:#ecfeff;color:#0891b2"><i class="bi bi-calendar-event-fill"></i></div>
+            <div class="kpi-value" data-target="{{ total_events }}">{{ total_events }}</div>
+            <div class="kpi-label">Total Events</div>
+            <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>Live</span>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#10b981,#059669)"></div>
+            <div class="kpi-icon" style="background:#f0fdf4;color:#059669"><i class="bi bi-ticket-perforated-fill"></i></div>
+            <div class="kpi-value" data-target="{{ total_bookings }}">{{ total_bookings }}</div>
+            <div class="kpi-label">Total Bookings</div>
+            <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>Growing</span>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#f59e0b,#d97706)"></div>
+            <div class="kpi-icon" style="background:#fffbeb;color:#d97706"><i class="bi bi-currency-rupee"></i></div>
+            <div class="kpi-value" data-target="{{ total_revenue }}">{{ total_revenue }}</div>
+            <div class="kpi-label">Total Revenue</div>
+            <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>INR</span>
+        </div>
+    </div>
+
     {% elif user.role == 'ORGANIZER' %}
-        <div class="col-md-4"><div class="feature-card"><p>My Events</p><h3>{{ total_events }}</h3></div></div>
-        <div class="col-md-4"><div class="feature-card"><p>Ticket Sales</p><h3>{{ total_bookings }}</h3></div></div>
-        <div class="col-md-4"><div class="feature-card"><p>Revenue</p><h3>INR {{ total_revenue }}</h3></div></div>
+    <div class="col-6 col-lg-4">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#6366f1,#4f46e5)"></div>
+            <div class="kpi-icon" style="background:#eef2ff;color:#4f46e5"><i class="bi bi-calendar-event-fill"></i></div>
+            <div class="kpi-value" data-target="{{ total_events }}">{{ total_events }}</div>
+            <div class="kpi-label">My Events</div>
+            <span class="kpi-trend flat">All time</span>
+        </div>
+    </div>
+    <div class="col-6 col-lg-4">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#10b981,#059669)"></div>
+            <div class="kpi-icon" style="background:#f0fdf4;color:#059669"><i class="bi bi-ticket-perforated-fill"></i></div>
+            <div class="kpi-value" data-target="{{ total_bookings }}">{{ total_bookings }}</div>
+            <div class="kpi-label">Ticket Sales</div>
+            <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>Growing</span>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#f59e0b,#d97706)"></div>
+            <div class="kpi-icon" style="background:#fffbeb;color:#d97706"><i class="bi bi-currency-rupee"></i></div>
+            <div class="kpi-value" data-target="{{ total_revenue }}">{{ total_revenue }}</div>
+            <div class="kpi-label">Revenue Earned</div>
+            <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>INR</span>
+        </div>
+    </div>
+
     {% else %}
-        <div class="col-md-6"><div class="feature-card"><p>My Bookings</p><h3>{{ my_bookings }}</h3></div></div>
-        <div class="col-md-6"><div class="feature-card"><p>Upcoming Events</p><h3>{{ upcoming_events }}</h3></div></div>
+    <div class="col-6">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#6366f1,#4f46e5)"></div>
+            <div class="kpi-icon" style="background:#eef2ff;color:#4f46e5"><i class="bi bi-ticket-perforated-fill"></i></div>
+            <div class="kpi-value" data-target="{{ my_bookings }}">{{ my_bookings }}</div>
+            <div class="kpi-label">My Bookings</div>
+            <span class="kpi-trend flat">All time</span>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="kpi-card">
+            <div class="kpi-stripe" style="background:linear-gradient(180deg,#10b981,#059669)"></div>
+            <div class="kpi-icon" style="background:#f0fdf4;color:#059669"><i class="bi bi-calendar-check-fill"></i></div>
+            <div class="kpi-value" data-target="{{ upcoming_events }}">{{ upcoming_events }}</div>
+            <div class="kpi-label">Upcoming Events</div>
+            <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>Confirmed</span>
+        </div>
+    </div>
     {% endif %}
 </div>
-<div class="mt-4 d-flex gap-2">
-    <a href="/dashboard/calendar/" class="btn btn-primary-brand">Calendar View</a>
-    <a href="/dashboard/analytics/" class="btn btn-outline-brand">Analytics</a>
+
+<!-- Quick Actions -->
+<div class="glass-card p-4">
+    <h6 class="mb-3" style="font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted)">Quick Actions</h6>
+    <div class="row g-2">
+        <div class="col-6 col-md-3">
+            <a href="/events/" class="quick-action">
+                <span class="qa-icon"><i class="bi bi-search"></i></span>
+                Browse Events
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="/bookings/history/" class="quick-action">
+                <span class="qa-icon"><i class="bi bi-ticket-perforated"></i></span>
+                My Tickets
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="/dashboard/calendar/" class="quick-action">
+                <span class="qa-icon"><i class="bi bi-calendar3"></i></span>
+                Calendar View
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="/dashboard/analytics/" class="quick-action">
+                <span class="qa-icon"><i class="bi bi-bar-chart-line"></i></span>
+                Analytics
+            </a>
+        </div>
+    </div>
 </div>
+
 {% endblock %}

@@ -1,10 +1,86 @@
-<h2>Booking Confirmed</h2>
-<p>Hello {{ booking.user.first_name|default:booking.user.username }},</p>
-<p>Your booking for <strong>{{ booking.event.title }}</strong> is confirmed.</p>
-<ul>
-    <li>Booking Reference: {{ booking.booking_reference }}</li>
-    <li>Event Date: {{ booking.event.start_datetime }}</li>
-    <li>Venue: {{ booking.event.location_name }}</li>
-    <li>Quantity: {{ booking.quantity }}</li>
-</ul>
-<p>You can view your ticket and QR code from your dashboard.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Confirmed \u2014 EventSphere</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:'Helvetica Neue',Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:540px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(15,23,42,.08)">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#0f172a 100%);padding:36px;text-align:center">
+              <div style="font-size:1.4rem;font-weight:800;letter-spacing:-.04em;color:#fff;margin-bottom:4px">&#11088; EventSphere</div>
+              <div style="font-size:1rem;color:rgba(255,255,255,.65)">Your ticket is confirmed</div>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px">
+              <p style="margin:0 0 16px;font-size:15px;color:#1e293b">
+                Hi <strong>{{ booking.user.first_name|default:booking.user.username }}</strong>,
+              </p>
+              <p style="margin:0 0 24px;font-size:14px;color:#475569;line-height:1.6">
+                Great news! Your booking for <strong style="color:#1e293b">{{ booking.event.title }}</strong> is confirmed.
+                Here are your booking details:
+              </p>
+
+              <!-- Details card -->
+              <table width="100%" style="background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:24px">
+                <tr>
+                  <td style="padding:14px 18px;border-bottom:1px solid #e2e8f0">
+                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b">Booking Reference</span><br>
+                    <span style="font-size:14px;font-weight:700;color:#4f46e5">{{ booking.booking_reference }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 18px;border-bottom:1px solid #e2e8f0">
+                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b">Event</span><br>
+                    <span style="font-size:14px;font-weight:600;color:#1e293b">{{ booking.event.title }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 18px;border-bottom:1px solid #e2e8f0">
+                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b">Date &amp; Time</span><br>
+                    <span style="font-size:14px;color:#1e293b">{{ booking.event.start_datetime }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 18px;border-bottom:1px solid #e2e8f0">
+                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b">Venue</span><br>
+                    <span style="font-size:14px;color:#1e293b">{{ booking.event.location_name }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 18px">
+                    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b">Tickets</span><br>
+                    <span style="font-size:14px;color:#1e293b">{{ booking.quantity }} ticket(s)</span>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">
+                You can view your QR ticket and manage your bookings from your
+                <a href="#" style="color:#4f46e5;font-weight:600">EventSphere dashboard</a>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8fafc;padding:20px;text-align:center;border-top:1px solid #e2e8f0">
+              <p style="margin:0;font-size:12px;color:#94a3b8">&copy; 2026 EventSphere. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
