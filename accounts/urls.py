@@ -2,6 +2,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
+    AdminUserPasswordResetAPIView,
     CurrentUserRoleAPIView,
     OrganizerApprovalAPIView,
     ProfileAPIView,
@@ -17,6 +18,7 @@ urlpatterns = [
     path('register/', RegisterAPIView.as_view(), name='register'),
     path('profile/', ProfileAPIView.as_view(), name='profile'),
     path('users/', UserListAPIView.as_view(), name='users'),
+    path('users/<int:id>/reset-password/', AdminUserPasswordResetAPIView.as_view(), name='user-reset-password'),
     path('organizers/<int:id>/approval/', OrganizerApprovalAPIView.as_view(), name='organizer-approval'),
     path('role/', CurrentUserRoleAPIView.as_view(), name='current-role'),
     path('api/token/', TokenObtainPairView.as_view(), name='token-obtain'),

@@ -6,7 +6,12 @@ from rest_framework.response import Response
 
 from .forms import UserRegistrationForm
 from .permissions import IsAdminUserRole
-from .serializers import OrganizerApprovalSerializer, RegisterSerializer, UserSerializer
+from .serializers import (
+	AdminPasswordResetSerializer,
+	OrganizerApprovalSerializer,
+	RegisterSerializer,
+	UserSerializer,
+)
 
 User = get_user_model()
 
@@ -34,6 +39,20 @@ class UserListAPIView(generics.ListAPIView):
 	serializer_class = UserSerializer
 	permission_classes = [permissions.IsAuthenticated, IsAdminUserRole]
 	queryset = User.objects.all().order_by('-date_joined')
+
+
+class AdminUserPasswordResetAPIView(generics.UpdateAPIView):
+	serializer_class = AdminPasswordResetSerializer
+	permission_classes = [permissions.IsAuthenticated, IsAdminUserRole]
+	queryset = User.objects.all()
+	lookup_field = 'id'
+
+	def update(self, request, *args, **kwargs):
+		user = self.get_object()
+		serializer = self.get_serializer(instance=user, data=request.data)
+		serializer.is_valid(raise_exception=True)
+		serializer.save()
+		return Response({'detail': f'Password reset successful for {user.username}.'})
 
 
 class CurrentUserRoleAPIView(generics.GenericAPIView):

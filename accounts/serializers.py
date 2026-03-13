@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -82,3 +83,24 @@ class OrganizerApprovalSerializer(serializers.ModelSerializer):
             instance.organizer_profile.approved_at = timezone.now()
             instance.organizer_profile.save(update_fields=['approved_at'])
         return instance
+
+
+class AdminPasswordResetSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        new_password = attrs.get('new_password')
+        confirm_password = attrs.get('confirm_password')
+
+        if new_password != confirm_password:
+            raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
+
+        validate_password(new_password, self.instance)
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.instance
+        user.set_password(self.validated_data['new_password'])
+        user.save(update_fields=['password'])
+        return user
