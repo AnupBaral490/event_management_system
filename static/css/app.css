@@ -725,6 +725,87 @@ a:hover { color: var(--primary-dark); }
   padding: 0 0.75rem;
 }
 
+.register-wrap {
+  align-items: flex-start;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+
+.register-card {
+  border: 1px solid rgba(79,70,229,.18);
+  position: relative;
+  overflow: hidden;
+}
+
+.register-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(155deg, rgba(79,70,229,.06), transparent 40%);
+}
+
+.register-banner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.register-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.register-subtitle {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.register-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.register-card .form-control,
+.register-card .form-select {
+  height: 44px;
+  background: #fcfdff;
+  border-color: #d9e1ee;
+}
+
+.register-card .form-control:focus,
+.register-card .form-select:focus {
+  background: #fff;
+}
+
+.auth-help {
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.auth-field-error {
+  font-size: 0.78rem;
+  margin-top: 0.3rem;
+}
+
+.auth-submit {
+  padding: 0.74rem;
+  font-size: 0.95rem;
+}
+
 /* ─── Ticket Card ───────────────────────────────────────── */
 .ticket-card {
   background: var(--surface);
@@ -1015,6 +1096,10 @@ a:hover { color: var(--primary-dark); }
 @media (max-width: 767px) {
   .hero-panel { padding: 1.75rem 1.5rem !important; }
   .auth-card { padding: 1.75rem 1.5rem; }
+  .register-wrap { padding-top: 1.5rem; }
+  .register-title { font-size: 1.28rem; }
+  .register-banner { flex-direction: column; }
+  .register-trust { width: fit-content; }
   .kpi-card .kpi-value { font-size: 1.55rem; }
   .orb-1, .orb-2 { opacity: 0.3; }
   .ticket-header, .ticket-body { padding: 1.5rem; }

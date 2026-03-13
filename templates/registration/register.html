@@ -1,36 +1,102 @@
 {% extends 'base.html' %}
 {% block title %}Create Account — EventSphere{% endblock %}
 {% block content %}
-<div class="auth-wrap">
-  <div class="auth-card" style="max-width:520px">
-    <div class="text-center mb-4">
-      <div class="auth-logo mb-2"><i class="bi bi-stars me-1"></i>EventSphere</div>
-      <h4 style="font-size:1.35rem;margin-bottom:.35rem">Create your account</h4>
-      <p style="color:var(--text-muted);font-size:.88rem;margin:0">Join thousands of event lovers and organizers</p>
+<div class="auth-wrap register-wrap">
+  <div class="auth-card register-card" style="max-width:640px">
+    <div class="register-banner mb-4">
+      <div>
+        <div class="auth-logo mb-1"><i class="bi bi-stars me-1"></i>EventSphere</div>
+        <h4 class="register-title">Create your account</h4>
+        <p class="register-subtitle">Join thousands of event lovers and organizers</p>
+      </div>
+      <span class="register-trust"><i class="bi bi-shield-check"></i>Secure signup</span>
     </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger mb-3" role="alert">
+      {% for error in form.non_field_errors %}
+        <div>{{ error }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
 
     <form method="post" novalidate>
       {% csrf_token %}
-      {% for field in form %}
-      <div class="mb-3">
-        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}
-        <div class="text-danger" style="font-size:.8rem;margin-top:.25rem">
-          {% for error in field.errors %}{{ error }}{% endfor %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+          <div class="text-danger auth-field-error">{% for error in form.username.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+          {% if form.username.help_text %}
+          <div class="form-text auth-help">{{ form.username.help_text }}</div>
+          {% endif %}
         </div>
-        {% endif %}
-        {% if field.help_text %}
-        <div class="form-text" style="font-size:.78rem">{{ field.help_text }}</div>
-        {% endif %}
+
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+          <div class="text-danger auth-field-error">{% for error in form.email.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}
+          <div class="text-danger auth-field-error">{% for error in form.first_name.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}
+          <div class="text-danger auth-field-error">{% for error in form.last_name.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+          {{ form.phone_number }}
+          {% if form.phone_number.errors %}
+          <div class="text-danger auth-field-error">{% for error in form.phone_number.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+          {{ form.role }}
+          {% if form.role.errors %}
+          <div class="text-danger auth-field-error">{% for error in form.role.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+          <div class="text-danger auth-field-error">{% for error in form.password.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.confirm_password.id_for_label }}">{{ form.confirm_password.label }}</label>
+          {{ form.confirm_password }}
+          {% if form.confirm_password.errors %}
+          <div class="text-danger auth-field-error">{% for error in form.confirm_password.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
       </div>
-      {% endfor %}
-      <button class="btn btn-primary-brand w-100 mt-2" type="submit" style="padding:.7rem;font-size:.95rem">
+
+      <button class="btn btn-primary-brand w-100 mt-4 auth-submit" type="submit">
         <i class="bi bi-person-check me-2"></i>Create Account
       </button>
     </form>
 
-    <div class="auth-divider"><span>already have an account?</span></div>
+    <div class="auth-divider"><span>Already have an account?</span></div>
 
     <div class="text-center mt-3">
       <a href="/accounts/login/" class="btn btn-outline-brand w-100">

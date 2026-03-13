@@ -12,6 +12,28 @@ class UserRegistrationForm(forms.ModelForm):
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'password']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        placeholders = {
+            'username': 'Choose a unique username',
+            'first_name': 'Enter your first name',
+            'last_name': 'Enter your last name',
+            'email': 'name@example.com',
+            'phone_number': 'Enter mobile number',
+            'role': 'Select role',
+            'password': 'Create a strong password',
+            'confirm_password': 'Re-enter your password',
+        }
+
+        for name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
+            if name in placeholders:
+                field.widget.attrs['placeholder'] = placeholders[name]
+
+        self.fields['role'].initial = User.Role.ATTENDEE
+        self.fields['password'].widget = forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': placeholders['password']})
+        self.fields['confirm_password'].widget = forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': placeholders['confirm_password']})
+
     def clean(self):
         cleaned_data = super().clean()
         if cleaned_data.get('password') != cleaned_data.get('confirm_password'):
