@@ -207,19 +207,43 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
 
 class TicketValidationSerializer(serializers.Serializer):
-    ticket_id = serializers.CharField()
+    ticket_id = serializers.CharField(required=False, allow_blank=True)
+    qr_payload = serializers.CharField(required=False, allow_blank=True)
 
-    def validate_ticket_id(self, value):
+    def validate(self, attrs):
+        ticket_id = (attrs.get('ticket_id') or '').strip()
+        qr_payload = (attrs.get('qr_payload') or '').strip()
+
+        if not ticket_id and not qr_payload:
+            raise serializers.ValidationError('Provide a ticket ID or scanned QR payload.')
+
+        if not ticket_id and qr_payload:
+            ticket_id = qr_payload.split('|', 1)[0].strip()
+
+        if not ticket_id:
+            raise serializers.ValidationError({'qr_payload': 'Unable to extract a valid ticket ID from QR payload.'})
+
         try:
-            ticket = Ticket.objects.select_related('booking', 'booking__event', 'booking__user').get(ticket_id=value)
+            ticket = Ticket.objects.select_related(
+                'booking',
+                'booking__event',
+                'booking__event__organizer',
+                'booking__user',
+            ).get(ticket_id=ticket_id)
         except Ticket.DoesNotExist as exc:
             raise serializers.ValidationError('Invalid ticket ID') from exc
+
+        request_user = self.context['request'].user
+        if request_user.role == 'ORGANIZER' and ticket.booking.event.organizer_id != request_user.id:
+            raise serializers.ValidationError('You can only check in tickets for your own events.')
         if ticket.is_used:
             raise serializers.ValidationError('Ticket has already been used.')
         if ticket.booking.status != Booking.Status.CONFIRMED:
             raise serializers.ValidationError('Booking is not confirmed.')
+
         self.context['ticket'] = ticket
-        return value
+        attrs['ticket_id'] = ticket_id
+        return attrs
 
     def save(self, **kwargs):
         ticket = self.context['ticket']

@@ -2,12 +2,15 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 from rest_framework.test import APIRequestFactory
+from rest_framework import status
+from rest_framework.test import APITestCase
 
 from bookings.serializers import BookingCreateSerializer
 from events.models import Event, EventCategory, EventTicketType
 
-from .models import Booking, Coupon
+from .models import Attendance, Booking, Coupon, Ticket
 
 
 User = get_user_model()
@@ -96,3 +99,114 @@ class BookingPricingTests(TestCase):
 
 		self.assertFalse(serializer.is_valid())
 		self.assertIn('coupon_code', serializer.errors)
+
+
+class TicketCheckInTests(APITestCase):
+	def setUp(self):
+		self.organizer = User.objects.create_user(
+			username='organizer-checkin',
+			password='pass12345',
+			role='ORGANIZER',
+			is_organizer_approved=True,
+		)
+		self.other_organizer = User.objects.create_user(
+			username='other-organizer',
+			password='pass12345',
+			role='ORGANIZER',
+			is_organizer_approved=True,
+		)
+		self.admin = User.objects.create_user(
+			username='admin-checkin',
+			password='pass12345',
+			role='ADMIN',
+		)
+		self.attendee = User.objects.create_user(
+			username='attendee-checkin',
+			password='pass12345',
+			role='ATTENDEE',
+		)
+		self.category = EventCategory.objects.create(name='Music')
+		self.event = Event.objects.create(
+			organizer=self.organizer,
+			category=self.category,
+			title='Live Show',
+			description='Concert',
+			location_name='Arena',
+			start_datetime='2030-02-10T10:00:00Z',
+			end_datetime='2030-02-10T18:00:00Z',
+			price=Decimal('500.00'),
+			capacity=100,
+			is_published=True,
+		)
+		self.other_event = Event.objects.create(
+			organizer=self.other_organizer,
+			category=self.category,
+			title='Private Show',
+			description='Concert',
+			location_name='Club',
+			start_datetime='2030-03-10T10:00:00Z',
+			end_datetime='2030-03-10T18:00:00Z',
+			price=Decimal('700.00'),
+			capacity=80,
+			is_published=True,
+		)
+		self.booking = Booking.objects.create(
+			user=self.attendee,
+			event=self.event,
+			quantity=1,
+			base_amount=Decimal('500.00'),
+			discount_amount=Decimal('0.00'),
+			total_amount=Decimal('500.00'),
+			status=Booking.Status.CONFIRMED,
+		)
+		self.ticket = Ticket.objects.create(booking=self.booking)
+		self.other_booking = Booking.objects.create(
+			user=self.attendee,
+			event=self.other_event,
+			quantity=1,
+			base_amount=Decimal('700.00'),
+			discount_amount=Decimal('0.00'),
+			total_amount=Decimal('700.00'),
+			status=Booking.Status.CONFIRMED,
+		)
+		self.other_ticket = Ticket.objects.create(booking=self.other_booking)
+		self.validate_url = reverse('bookings:ticket-validate')
+
+	def test_organizer_can_validate_ticket_using_qr_payload(self):
+		self.client.force_authenticate(user=self.organizer)
+		payload = f'{self.ticket.ticket_id}|{self.attendee.id}|{self.event.id}'
+
+		response = self.client.post(self.validate_url, {'qr_payload': payload}, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.ticket.refresh_from_db()
+		self.assertTrue(self.ticket.is_used)
+		attendance = Attendance.objects.get(ticket=self.ticket)
+		self.assertEqual(attendance.marked_by, self.organizer)
+
+	def test_duplicate_ticket_scan_is_rejected(self):
+		self.ticket.is_used = True
+		self.ticket.save(update_fields=['is_used'])
+		self.client.force_authenticate(user=self.organizer)
+
+		response = self.client.post(self.validate_url, {'ticket_id': self.ticket.ticket_id}, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn('already been used', str(response.data))
+
+	def test_organizer_cannot_validate_other_organizer_ticket(self):
+		self.client.force_authenticate(user=self.organizer)
+
+		response = self.client.post(self.validate_url, {'ticket_id': self.other_ticket.ticket_id}, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn('own events', str(response.data))
+
+	def test_admin_can_validate_any_ticket(self):
+		self.client.force_authenticate(user=self.admin)
+
+		response = self.client.post(self.validate_url, {'ticket_id': self.other_ticket.ticket_id}, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.other_ticket.refresh_from_db()
+		self.assertTrue(self.other_ticket.is_used)

@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import TemplateView
 
 from bookings.models import Booking, Coupon
+from bookings.serializers import TicketValidationSerializer
 from events.models import Event, EventTicketType
 
 from .forms import OrganizerCouponForm, OrganizerTicketTypeForm
@@ -22,6 +23,16 @@ class OrganizerOnlyMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 	def handle_no_permission(self):
 		messages.error(self.request, 'Only approved organizers can access this page.')
+		return redirect('dashboard:home')
+
+
+class AdminOrOrganizerCheckInMixin(LoginRequiredMixin, UserPassesTestMixin):
+	def test_func(self):
+		user = self.request.user
+		return user.role == 'ADMIN' or (user.role == 'ORGANIZER' and user.is_organizer_approved)
+
+	def handle_no_permission(self):
+		messages.error(self.request, 'Only admins and approved organizers can access check-in tools.')
 		return redirect('dashboard:home')
 
 
@@ -60,6 +71,68 @@ class CalendarPageView(TemplateView):
 
 class AnalyticsPageView(LoginRequiredMixin, TemplateView):
 	template_name = 'dashboard/analytics.html'
+
+
+class TicketCheckInPageView(AdminOrOrganizerCheckInMixin, TemplateView):
+	template_name = 'dashboard/check_in.html'
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		user = self.request.user
+		event_queryset = Event.objects.filter(is_published=True, is_blocked=False)
+		if user.role == 'ORGANIZER':
+			event_queryset = event_queryset.filter(organizer=user)
+
+		context['managed_events'] = event_queryset.order_by('start_datetime')[:6]
+		context['checked_in_count'] = Booking.objects.filter(
+			status=Booking.Status.CONFIRMED,
+			ticket__is_used=True,
+			**({'event__organizer': user} if user.role == 'ORGANIZER' else {}),
+		).count()
+		context['pending_check_ins'] = Booking.objects.filter(
+			status=Booking.Status.CONFIRMED,
+			ticket__is_used=False,
+			**({'event__organizer': user} if user.role == 'ORGANIZER' else {}),
+		).count()
+		context['validation_result'] = kwargs.get('validation_result')
+		context['submitted_value'] = kwargs.get('submitted_value', '')
+		return context
+
+	def post(self, request, *args, **kwargs):
+		submitted_value = (request.POST.get('ticket_input') or '').strip()
+		serializer = TicketValidationSerializer(
+			data={'ticket_id': submitted_value, 'qr_payload': submitted_value},
+			context={'request': request},
+		)
+
+		if serializer.is_valid():
+			attendance = serializer.save()
+			ticket = attendance.ticket
+			messages.success(request, f'{ticket.ticket_id} checked in successfully.')
+			return self.render_to_response(
+				self.get_context_data(
+					validation_result={
+						'success': True,
+						'ticket_id': ticket.ticket_id,
+						'attendee_name': ticket.booking.user.get_full_name() or ticket.booking.user.username,
+						'event_title': ticket.booking.event.title,
+						'checked_in_at': ticket.checked_in_at,
+					},
+				)
+			)
+
+		error_text = ' '.join(
+			str(message)
+			for messages_list in serializer.errors.values()
+			for message in (messages_list if isinstance(messages_list, list) else [messages_list])
+		)
+		messages.error(request, error_text or 'Unable to validate ticket.')
+		return self.render_to_response(
+			self.get_context_data(
+				validation_result={'success': False, 'message': error_text or 'Unable to validate ticket.'},
+				submitted_value=submitted_value,
+			)
+		)
 
 
 class OrganizerTicketTypeManageView(OrganizerOnlyMixin, TemplateView):

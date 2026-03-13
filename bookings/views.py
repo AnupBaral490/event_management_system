@@ -5,7 +5,7 @@ from rest_framework import status
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, ListView
 
-from accounts.permissions import IsApprovedOrganizer
+from accounts.permissions import IsAdminOrApprovedOrganizer
 from events.models import Event
 
 from .models import Booking, Ticket
@@ -115,7 +115,7 @@ class TicketListAPIView(generics.ListAPIView):
 
 class TicketValidationAPIView(generics.GenericAPIView):
 	serializer_class = TicketValidationSerializer
-	permission_classes = [permissions.IsAuthenticated, IsApprovedOrganizer]
+	permission_classes = [permissions.IsAuthenticated, IsAdminOrApprovedOrganizer]
 
 	def post(self, request, *args, **kwargs):
 		serializer = self.get_serializer(data=request.data, context={'request': request})

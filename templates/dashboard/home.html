@@ -141,6 +141,14 @@
                 Analytics
             </a>
         </div>
+        {% if user.role == 'ADMIN' or user.role == 'ORGANIZER' and user.is_organizer_approved %}
+        <div class="col-6 col-md-3">
+            <a href="/dashboard/check-in/" class="quick-action">
+                <span class="qa-icon"><i class="bi bi-qr-code-scan"></i></span>
+                Ticket Check-In
+            </a>
+        </div>
+        {% endif %}
         {% if user.role == 'ORGANIZER' and user.is_organizer_approved %}
         <div class="col-6 col-md-3">
             <a href="/dashboard/organizer/ticket-types/" class="quick-action">

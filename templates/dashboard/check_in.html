@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}Ticket Check-In — EventSphere{% endblock %}
+{% block content %}
+
+<div class="page-header checkin-header">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+        <div>
+            <span class="section-label">Operations</span>
+            <h2 class="mb-1">QR Ticket Check-In</h2>
+            <p class="mb-0" style="color:var(--text-muted)">Scan a ticket QR code or paste the ticket ID to validate entry instantly.</p>
+        </div>
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="checkin-stat">
+                <span class="checkin-stat-label">Checked In</span>
+                <strong>{{ checked_in_count }}</strong>
+            </div>
+            <div class="checkin-stat">
+                <span class="checkin-stat-label">Pending</span>
+                <strong>{{ pending_check_ins }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="glass-card checkin-panel p-4 h-100">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div>
+                    <h5 class="mb-1">Scanner</h5>
+                    <p class="mb-0" style="color:var(--text-muted);font-size:.85rem">Use your camera for fast entry or switch to manual verification.</p>
+                </div>
+                <button type="button" class="btn btn-outline-brand btn-sm" id="scanner-toggle">
+                    <i class="bi bi-camera-video me-1"></i>Start Scanner
+                </button>
+            </div>
+
+            <div id="qr-reader" class="checkin-scanner mb-3"></div>
+            <div id="scanner-status" class="checkin-status mb-3">Preparing scanner...</div>
+
+            <form method="post" class="checkin-form">
+                {% csrf_token %}
+                <label class="form-label" for="ticket_input">Ticket ID or QR payload</label>
+                <div class="checkin-input-row">
+                    <input
+                        type="text"
+                        id="ticket_input"
+                        name="ticket_input"
+                        class="form-control"
+                        value="{{ submitted_value }}"
+                        placeholder="Example: TKT-1234567890 or scanned QR text"
+                        autocomplete="off"
+                        required
+                    >
+                    <button type="submit" class="btn btn-primary-brand">
+                        <i class="bi bi-patch-check me-1"></i>Validate
+                    </button>
+                </div>
+            </form>
+
+            {% if validation_result %}
+            <div class="checkin-result {% if validation_result.success %}checkin-result-success{% else %}checkin-result-error{% endif %} mt-4">
+                {% if validation_result.success %}
+                <div class="checkin-result-icon"><i class="bi bi-check2-circle"></i></div>
+                <div>
+                    <h6 class="mb-1">Entry approved</h6>
+                    <p class="mb-1"><strong>{{ validation_result.attendee_name }}</strong> has been checked in for {{ validation_result.event_title }}.</p>
+                    <div class="checkin-result-meta">Ticket {{ validation_result.ticket_id }} • {{ validation_result.checked_in_at|date:'M d, Y · g:i A' }}</div>
+                </div>
+                {% else %}
+                <div class="checkin-result-icon"><i class="bi bi-x-circle"></i></div>
+                <div>
+                    <h6 class="mb-1">Validation failed</h6>
+                    <p class="mb-0">{{ validation_result.message }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="glass-card p-4 h-100">
+            <h5 class="mb-3">Managed Events</h5>
+            {% if managed_events %}
+            <div class="d-flex flex-column gap-3">
+                {% for event in managed_events %}
+                <div class="checkin-event-card">
+                    <div>
+                        <div class="checkin-event-title">{{ event.title }}</div>
+                        <div class="checkin-event-meta">
+                            <i class="bi bi-calendar3"></i>{{ event.start_datetime|date:'D, M d · g:i A' }}
+                        </div>
+                        <div class="checkin-event-meta">
+                            <i class="bi bi-geo-alt"></i>{{ event.location_name|default:'Online' }}
+                        </div>
+                    </div>
+                    <span class="badge-pill" style="background:#eef2ff;color:#4338ca">{{ event.available_seats }} seats left</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state py-3">
+                <div class="empty-icon"><i class="bi bi-calendar-x"></i></div>
+                <h6>No events available</h6>
+                <p class="mb-0">Publish an event first to start validating tickets.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const input = document.getElementById('ticket_input');
+  const toggle = document.getElementById('scanner-toggle');
+  const readerId = 'qr-reader';
+  const statusEl = document.getElementById('scanner-status');
+  let scanner = null;
+  let scannerActive = false;
+
+  function setStatus(message, type) {
+    statusEl.textContent = message;
+    statusEl.className = 'checkin-status mb-3' + (type ? ' checkin-status-' + type : '');
+  }
+
+  function loadScannerLibrary() {
+    if (window.Html5Qrcode) {
+      return Promise.resolve();
+    }
+
+    return new Promise(function (resolve, reject) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  function stopScanner() {
+    if (!scanner || !scannerActive) {
+      return Promise.resolve();
+    }
+    return scanner.stop().then(function () {
+      scanner.clear();
+      scannerActive = false;
+      toggle.innerHTML = '<i class="bi bi-camera-video me-1"></i>Start Scanner';
+      setStatus('Scanner stopped. You can restart it anytime.', 'idle');
+    }).catch(function () {
+      scannerActive = false;
+      toggle.innerHTML = '<i class="bi bi-camera-video me-1"></i>Start Scanner';
+      setStatus('Scanner stopped. You can restart it anytime.', 'idle');
+    });
+  }
+
+  function onScanSuccess(decodedText) {
+    input.value = decodedText;
+    stopScanner();
+    setStatus('QR code captured. Review the value below and validate entry.', 'success');
+    if (window.showToast) {
+      window.showToast('QR code captured. Review and validate the ticket.', 'success');
+    }
+  }
+
+  function startScanner() {
+    setStatus('Requesting camera access...', 'loading');
+
+    scanner = scanner || new Html5Qrcode(readerId);
+    return scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      onScanSuccess
+    ).then(function () {
+      scannerActive = true;
+      toggle.innerHTML = '<i class="bi bi-camera-video-off me-1"></i>Stop Scanner';
+      setStatus('Scanner is live. Hold the QR code inside the frame.', 'success');
+    }).catch(function () {
+      setStatus('Unable to access the camera. Check permission settings or use manual validation.', 'error');
+      if (window.showToast) {
+        window.showToast('Unable to access the camera. Check browser permission or use manual validation.', 'warning');
+      }
+    });
+  }
+
+  toggle.addEventListener('click', function () {
+    if (scannerActive) {
+      stopScanner();
+      return;
+    }
+
+    loadScannerLibrary().then(function () {
+      return startScanner();
+    }).catch(function () {
+      setStatus('Scanner library failed to load. Use manual ticket validation for now.', 'error');
+      if (window.showToast) {
+        window.showToast('Scanner library could not be loaded. Use manual validation instead.', 'error');
+      }
+    });
+  });
+
+  loadScannerLibrary().then(function () {
+    return startScanner();
+  }).catch(function () {
+    setStatus('Scanner library failed to load. You can still paste a ticket ID manually.', 'error');
+  });
+});
+</script>
+{% endblock %}

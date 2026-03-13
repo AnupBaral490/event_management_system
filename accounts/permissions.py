@@ -23,3 +23,12 @@ class IsApprovedOrganizer(BasePermission):
             and request.user.role == 'ORGANIZER'
             and request.user.is_organizer_approved
         )
+
+
+class IsAdminOrApprovedOrganizer(BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        if request.user.role == 'ADMIN':
+            return True
+        return request.user.role == 'ORGANIZER' and request.user.is_organizer_approved
